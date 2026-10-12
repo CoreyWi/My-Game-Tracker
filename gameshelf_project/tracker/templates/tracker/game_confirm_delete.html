@@ -1,0 +1,14 @@
+{% extends "tracker/base.html" %}
+{% block title %}Remove {{ game.title }}{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>Remove {{ game.title }}?</h1>
+  <p>This deletes the game and its {{ game.completions.count }} completion record{{ game.completions.count|pluralize }}. This can't be undone.</p>
+  <form method="post" class="button-row">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, remove it</button>
+    <a href="{% url 'game_detail' game.pk %}">Cancel</a>
+  </form>
+</section>
+{% endblock %}

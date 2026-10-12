@@ -1,0 +1,97 @@
+{% extends "tracker/base.html" %}
+{% block title %}My Shelf{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>{{ user.username }}'s Shelf</h1>
+    <p class="muted">{{ total }} game{{ total|pluralize }} &middot; {{ completion_rate }}% finished &middot; {{ total_beats }} total beat{{ total_beats|pluralize }} &middot; {{ backlog_count }} in the backlog</p>
+  </div>
+  <a class="btn" href="{% url 'game_add' %}">+ Add Game</a>
+</section>
+
+<section class="stats">
+  {% for label, count, percent, code in summary %}
+    <a class="stat stat-{{ code }}{% if current_status == code %} active{% endif %}"
+       href="?status={{ code }}">
+      <span class="stat-count">{{ count }}</span>
+      <span class="stat-label">{{ label }}</span>
+      <span class="bar"><span style="width: {{ percent }}%"></span></span>
+    </a>
+  {% endfor %}
+</section>
+
+<form method="get" class="filters">
+  <input type="search" name="q" value="{{ search }}" placeholder="Search titles...">
+  <select name="status">
+    <option value="">All statuses</option>
+    {% for code, label in status_choices %}
+      <option value="{{ code }}" {% if current_status == code %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="platform">
+    <option value="">All platforms</option>
+    {% for p in platforms %}
+      <option value="{{ p.pk }}" {% if current_platform == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-small" type="submit">Filter</button>
+  {% if is_filtered %}<a href="{% url 'game_list' %}">Clear</a>{% endif %}
+</form>
+
+{% if games %}
+  <table class="games">
+    <thead>
+      <tr><th>Title</th><th>Platform</th><th>Status</th><th class="num">Beaten</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for game in games %}
+        <tr>
+          <td><a href="{% url 'game_detail' game.pk %}"><strong>{{ game.title }}</strong></a></td>
+          <td>{{ game.platform }}</td>
+          <td>
+            <form method="post" action="{% url 'game_set_status' game.pk %}" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <select name="status" class="badge-select badge-{{ game.status }}" onchange="this.form.submit()" aria-label="Status for {{ game.title }}">
+                {% for code, label in status_choices %}
+                  <option value="{{ code }}" {% if game.status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <noscript><button type="submit">Set</button></noscript>
+            </form>
+          </td>
+          <td class="num">{{ game.times_beaten }}</td>
+          <td class="actions">
+            <form method="post" action="{% url 'game_beat' game.pk %}" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn btn-small btn-ghost" title="Log another beat">+1 Beat</button>
+            </form>
+            <a href="{% url 'game_edit' game.pk %}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% elif total %}
+  <p class="empty">No games match those filters. <a href="{% url 'game_list' %}">Show everything</a></p>
+{% else %}
+  <div class="empty">
+    <h2>Your shelf is empty</h2>
+    <p>Add the games you own and track whether they're new, in progress, completed, 100%'d, or forgotten.</p>
+    <a class="btn" href="{% url 'game_add' %}">Add your first game</a>
+  </div>
+{% endif %}
+
+{% if most_beaten %}
+  <section class="card">
+    <h2>Most replayed</h2>
+    <ol>
+      {% for g in most_beaten %}
+        <li><a href="{% url 'game_detail' g.pk %}">{{ g.title }}</a> &mdash; {{ g.times_beaten }} time{{ g.times_beaten|pluralize }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endif %}
+{% endblock %}

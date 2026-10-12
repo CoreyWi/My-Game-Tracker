@@ -1,0 +1,46 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}GameShelf{% endblock %} | Cartridge &amp; Crate Games</title>
+  <link rel="stylesheet" href="{% static 'tracker/style.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'game_list' %}">
+      <span class="brand-mark">▣</span>
+      <span>GameShelf <small>by Cartridge &amp; Crate Games</small></span>
+    </a>
+    <nav>
+      {% if user.is_authenticated %}
+        <a href="{% url 'game_list' %}">My Shelf</a>
+        <a class="btn btn-small" href="{% url 'game_add' %}">+ Add Game</a>
+        {% if user.is_staff %}<a href="{% url 'admin:index' %}">Staff Admin</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="linklike">Log out ({{ user.username }})</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}">Log in</a>
+        <a class="btn btn-small" href="{% url 'signup' %}">Sign up</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="msg msg-{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    GameShelf &middot; built for Cartridge &amp; Crate Games loyalty members &middot; SVAD Python Final Project
+  </footer>
+</body>
+</html>

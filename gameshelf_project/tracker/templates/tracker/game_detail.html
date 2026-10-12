@@ -1,0 +1,65 @@
+{% extends "tracker/base.html" %}
+{% block title %}{{ game.title }}{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'game_list' %}">&larr; Back to my shelf</a></p>
+
+<section class="card">
+  <div class="detail-head">
+    <div>
+      <h1>{{ game.title }}</h1>
+      <p class="muted">{{ game.platform }} &middot; added {{ game.date_added|date:"M j, Y" }}</p>
+    </div>
+    <span class="badge badge-{{ game.status }}">{{ game.get_status_display }}</span>
+  </div>
+
+  <dl class="facts">
+    <dt>Times beaten</dt><dd>{{ game.times_beaten }}</dd>
+    <dt>Notes</dt><dd>{{ game.notes|default:"—"|linebreaksbr }}</dd>
+  </dl>
+
+  <div class="button-row">
+    <form method="post" action="{% url 'game_beat' game.pk %}" class="beat-form">
+      {% csrf_token %}
+      {{ beat_form.note }}
+      <button type="submit" class="btn">I beat it again (+1)</button>
+    </form>
+    {% if game.status != "100" %}
+      <form method="post" action="{% url 'game_hundred' game.pk %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-gold">Mark 100%</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% url 'game_set_status' game.pk %}" class="inline status-change">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <label for="status">Change status:</label>
+    <select name="status" id="status">
+      {% for code, label in status_choices %}
+        <option value="{{ code }}" {% if game.status == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-small btn-ghost">Update</button>
+  </form>
+
+  <p class="links">
+    <a href="{% url 'game_edit' game.pk %}">Edit details</a> &middot;
+    <a class="danger" href="{% url 'game_delete' game.pk %}">Remove from shelf</a>
+  </p>
+</section>
+
+<section class="card">
+  <h2>Completion history</h2>
+  {% if completions %}
+    <ul class="history">
+      {% for c in completions %}
+        <li><strong>{{ c.date_beaten|date:"M j, Y" }}</strong>{% if c.note %} &mdash; {{ c.note }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Not beaten yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
